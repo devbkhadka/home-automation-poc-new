@@ -5,6 +5,9 @@
   "references": [
     {
       "path": "./packages/core"
+    },
+    {
+      "path": "./apps/home-light-system"
     }
   ]
 }

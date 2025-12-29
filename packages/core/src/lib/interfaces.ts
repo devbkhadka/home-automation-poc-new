@@ -1,4 +1,9 @@
-export type DataType = number | string | boolean | Uint8Array | Record<string, any>;
+export type DataType =
+  | number
+  | string
+  | boolean
+  | Uint8Array
+  | Record<string, unknown>;
 
 export interface Sensor {
   id: string;
@@ -23,5 +28,5 @@ export interface Device {
   manufacturer: string;
   sensors: Sensor[];
   actuators: Actuator[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

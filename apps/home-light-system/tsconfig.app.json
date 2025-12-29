@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": ["node"]
+  },
+  "include": [
+    "system-definition/**/*.ts",
+    "devices/**/*.ts",
+    "data-transformers/**/*.ts"
+  ],
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"]
+}

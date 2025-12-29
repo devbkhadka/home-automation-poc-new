@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/core/src",
   "projectType": "library",
-  "tags": [],
+  "tags": ["type:lib"],
   "// targets": "to see all targets run: nx show project @home-automation/core --web",
   "targets": {
     "test": {
@@ -11,6 +11,7 @@
       "options": {
         "cwd": "packages/core"
       }
-    }
+    },
+    "lint": {}
   }
 }

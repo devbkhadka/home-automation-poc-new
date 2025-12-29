@@ -1,0 +1,8 @@
+{
+  "name": "@home-automation/home-light-system",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@home-automation/core": "workspace:*"
+  }
+}

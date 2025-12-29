@@ -18,10 +18,16 @@
     }
   ],
   "targetDefaults": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint .",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
     "test": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     }
   }
 }
