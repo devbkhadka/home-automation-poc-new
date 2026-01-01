@@ -8,6 +8,9 @@
     },
     {
       "path": "./apps/home-light-system"
+    },
+    {
+      "path": "./apps/simulations"
     }
   ]
 }

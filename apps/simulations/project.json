@@ -1,0 +1,17 @@
+{
+  "name": "@home-automation/simulations",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/simulations/src",
+  "projectType": "application",
+  "tags": ["type:simulation"],
+  "targets": {
+    "simulate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx src/index.ts",
+        "cwd": "apps/simulations"
+      }
+    },
+    "lint": {}
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@home-automation/simulations",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@home-automation/core": "workspace:*"
+  }
+}

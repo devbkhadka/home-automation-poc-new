@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
@@ -16,6 +17,13 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@home-automation/source"]
+    "customConditions": [
+      "@home-automation/source"
+    ],
+    "paths": {
+      "@home-automation/core": [
+        "packages/core/src/index.ts"
+      ]
+    }
   }
 }
