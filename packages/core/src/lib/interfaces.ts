@@ -119,3 +119,77 @@ export interface IDevice<
   reboot(): Promise<void>;
   getStatus(): DeviceStatus;
 }
+
+export type StateValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Record<string, any>
+  | any[];
+
+export type ComputedStateDefinition<
+  TDevices,
+  TStates,
+  TValue,
+  TDeps extends readonly (keyof TStates)[],
+  TDevDeps extends readonly (keyof TDevices)[],
+> = {
+  type: 'computed';
+  dependencies: TDeps;
+  deviceDependencies?: TDevDeps;
+  compute: (context: {
+    devices: Pick<TDevices, TDevDeps[number]>;
+    states: Pick<TStates, TDeps[number]>;
+  }) => TValue;
+  deviceKey?: keyof TDevices;
+};
+
+export type ModifiableStateDefinition<TDevices, TStates, TValue> = {
+  type: 'modifiable';
+  initialValue: TValue;
+  persistent?: boolean;
+  deviceKey?: keyof TDevices;
+};
+
+export type StateDefinition<
+  TDevices,
+  TStates,
+  TValue,
+  TDeps extends readonly (keyof TStates)[] = any,
+  TDevDeps extends readonly (keyof TDevices)[] = any,
+> =
+  | ComputedStateDefinition<TDevices, TStates, TValue, TDeps, TDevDeps>
+  | ModifiableStateDefinition<TDevices, TStates, TValue>;
+
+export type ActuatorStateForDevice<T> =
+  T extends IDevice<infer TActuators, any> ? ActuatorState<TActuators> : never;
+
+export type SensorDataForDevice<T> =
+  T extends IDevice<any, infer TSensors> ? SensorData<TSensors> : never;
+
+export interface EffectContext<
+  TDevices,
+  TStates,
+  TDeps extends readonly (keyof TStates)[],
+  TDevDeps extends readonly (keyof TDevices)[],
+> {
+  devices: Pick<TDevices, TDevDeps[number]>;
+  states: Pick<TStates, TDeps[number]>;
+  updateState<K extends keyof TStates>(stateKey: K, value: TStates[K]): void;
+}
+
+export type EffectDefinition<
+  TDevices,
+  TStates,
+  TDeps extends readonly (keyof TStates)[],
+  TDevDeps extends readonly (keyof TDevices)[],
+> = {
+  name: string;
+  dependencies: TDeps;
+  deviceDependencies?: TDevDeps;
+  action: (
+    context: EffectContext<TDevices, TStates, TDeps, TDevDeps>,
+  ) => void | Promise<void>;
+};
