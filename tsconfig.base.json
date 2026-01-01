@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./",
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
@@ -23,6 +23,9 @@
     "paths": {
       "@home-automation/core": [
         "packages/core/src/index.ts"
+      ],
+      "@home-automation/simulations": [
+        "apps/simulations/src/index.ts"
       ]
     }
   }

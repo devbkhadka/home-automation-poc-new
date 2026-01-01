@@ -6,10 +6,6 @@ import {
 
 export interface ProcessorConfig<TDevices, TStates> {
   devices: TDevices;
-  onDeviceStateChanged: <K extends keyof TDevices>(
-    deviceKey: K,
-    state: any,
-  ) => void;
 }
 
 export class Processor<TDevices, TStates> {
@@ -20,14 +16,9 @@ export class Processor<TDevices, TStates> {
   >();
   private effects: EffectDefinition<TDevices, TStates, any, any>[] = [];
   private devices: TDevices;
-  private onDeviceStateChanged: <K extends keyof TDevices>(
-    deviceKey: K,
-    state: any,
-  ) => void;
 
   constructor(config: ProcessorConfig<TDevices, TStates>) {
     this.devices = config.devices;
-    this.onDeviceStateChanged = config.onDeviceStateChanged;
   }
 
   registerState<
@@ -101,11 +92,28 @@ export class Processor<TDevices, TStates> {
     for (const stateName of currentChanges) {
       const def = this.definitions.get(stateName);
       if (def?.deviceKey) {
-        this.onDeviceStateChanged(def.deviceKey, this.states.get(stateName));
+        this.publishDesiredState(def.deviceKey, this.states.get(stateName));
       }
     }
 
     this.triggerEffects(Array.from(currentChanges));
+  }
+
+  /**
+   * Publishes the desired state for a specific device.
+   */
+  public async publishDesiredState<K extends keyof TDevices>(
+    deviceKey: K,
+    state: any,
+  ) {
+    const device = (this.devices as any)[deviceKey];
+    if (!device) {
+      console.warn(`Device ${String(deviceKey)} not found in system`);
+      return;
+    }
+
+    const topic = `${device.namespace}/${device.guid}/desired`;
+    await device.getMessageBus().publish(topic, JSON.stringify(state));
   }
 
   private hasChanged(oldValue: any, newValue: any): boolean {

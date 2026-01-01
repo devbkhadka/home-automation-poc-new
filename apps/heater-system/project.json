@@ -1,0 +1,22 @@
+{
+  "name": "@home-automation/heater-system",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/heater-system",
+  "projectType": "application",
+  "tags": ["type:app"],
+  "targets": {
+    "test": {
+      "command": "vitest run",
+      "options": {
+        "cwd": "apps/heater-system"
+      }
+    },
+    "lint": {},
+    "simulate": {
+      "command": "tsx src/main.ts",
+      "options": {
+        "cwd": "apps/heater-system"
+      }
+    }
+  }
+}

@@ -44,14 +44,17 @@ export interface TelemetryPayload<T = any> {
   sequenceId: string;
 }
 
+export type DataTypeFor<TSensor extends SensorConfig | ActuatorConfig> =
+  DataTypeMap[TSensor['dataType']];
+
 export type ActuatorState<TActuators extends Record<string, ActuatorConfig>> =
   Partial<{
-    [K in keyof TActuators]: DataTypeMap[TActuators[K]['dataType']];
+    [K in keyof TActuators]: DataTypeFor<TActuators[K]>;
   }>;
 
 export type SensorData<TSensors extends Record<string, SensorConfig>> =
   Partial<{
-    [K in keyof TSensors]: DataTypeMap[TSensors[K]['dataType']];
+    [K in keyof TSensors]: DataTypeFor<TSensors[K]>;
   }>;
 
 export interface CommandArg {
@@ -78,11 +81,8 @@ export interface ActuatorConfig {
 }
 
 export interface DeviceConfig<
-  TSensors extends Record<string, SensorConfig> = Record<string, SensorConfig>,
-  TActuators extends Record<string, ActuatorConfig> = Record<
-    string,
-    ActuatorConfig
-  >,
+  TSensors extends Record<string, SensorConfig>,
+  TActuators extends Record<string, ActuatorConfig>,
 > {
   guid: string;
   namespace: string;
@@ -104,12 +104,12 @@ export interface IDevice<
   readonly namespace: string;
 
   // Configuration
-  configure(config: DeviceConfig): Promise<void>;
+  configure(config: DeviceConfig<TSensors, TActuators>): Promise<void>;
 
   // Communication
   sendTelemetry<K extends keyof TSensors>(
     sensorName: K,
-    data: TelemetryPayload<TSensors[K]>,
+    data: TelemetryPayload<DataTypeFor<TSensors[K]>>,
   ): Promise<void>;
   onDesiredStateChange(
     handler: (state: ActuatorState<TActuators>) => void,
@@ -118,6 +118,14 @@ export interface IDevice<
   // Lifecycle
   reboot(): Promise<void>;
   getStatus(): DeviceStatus;
+}
+
+export interface IMessageBus {
+  publish(topic: string, message: string): Promise<void> | void;
+  subscribe(
+    topic: string,
+    callback: (message: string) => void,
+  ): Promise<void> | void;
 }
 
 export type StateValue =

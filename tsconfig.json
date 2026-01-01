@@ -11,6 +11,9 @@
     },
     {
       "path": "./apps/simulations"
+    },
+    {
+      "path": "./apps/heater-system"
     }
   ]
 }

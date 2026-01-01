@@ -2,28 +2,28 @@ import {
   IDevice,
   StateDefinition,
   EffectDefinition,
+  ActuatorConfig,
+  SensorConfig,
 } from './interfaces.js';
 import { Processor } from './processor.js';
-import { MQTTService } from './mqtt-service.js';
 
 /**
  * Abstract class representing an IoT System.
  * Groups multiple devices and defines their collective behavior through reactive states and effects.
  */
 export abstract class IotSystem<
-  TDevices extends Record<string, IDevice<any, any>>,
+  TDevices extends Record<
+    string,
+    IDevice<Record<string, ActuatorConfig>, Record<string, SensorConfig>>
+  >,
   TStates extends Record<string, any>,
 > {
   protected devices: TDevices = {} as TDevices;
-  protected processor: Processor<TDevices, TStates>;
-  protected mqttService: MQTTService;
+  private processor: Processor<TDevices, TStates>;
 
-  constructor(mqttService: MQTTService) {
-    this.mqttService = mqttService;
+  constructor() {
     this.processor = new Processor<TDevices, TStates>({
       devices: this.devices,
-      onDeviceStateChanged: (deviceKey, state) =>
-        this.publishDesiredState(deviceKey, state),
     });
   }
 
@@ -64,24 +64,6 @@ export abstract class IotSystem<
   }
 
   /**
-   * Internally publishes the desired state for a specific device.
-   * Called only by the processor when a linked system state changes.
-   */
-  protected async publishDesiredState<K extends keyof TDevices>(
-    deviceKey: K,
-    state: any,
-  ) {
-    const device = this.devices[deviceKey];
-    if (!device) {
-      console.warn(`Device ${String(deviceKey)} not found in system`);
-      return;
-    }
-
-    const topic = `${device.namespace}/${device.guid}/desired`;
-    await this.mqttService.publish(topic, JSON.stringify(state));
-  }
-
-  /**
    * Manually updates a modifiable system state.
    * @param name The name of the state.
    * @param value The new value.
@@ -93,7 +75,7 @@ export abstract class IotSystem<
   /**
    * Initializes the system, performing initial state recomputations.
    */
-  protected initialize() {
+  public initialize() {
     this.processor.initialize();
   }
 }

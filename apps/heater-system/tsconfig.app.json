@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"],
+  "references": [
+    {
+      "path": "../simulations/tsconfig.app.json"
+    },
+    {
+      "path": "../../packages/core/tsconfig.lib.json"
+    }
+  ]
+}

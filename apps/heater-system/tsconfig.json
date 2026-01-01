@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src/**/*"],
+  "references": [
+    {
+      "path": "../simulations"
+    },
+    {
+      "path": "../../packages/core"
+    }
+  ]
+}

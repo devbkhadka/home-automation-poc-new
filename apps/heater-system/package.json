@@ -1,0 +1,9 @@
+{
+  "name": "@home-automation/heater-system",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@home-automation/core": "workspace:*",
+    "@home-automation/simulations": "workspace:*"
+  }
+}

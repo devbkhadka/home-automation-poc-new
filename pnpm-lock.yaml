@@ -94,6 +94,15 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@25.0.3)(@vitest/ui@2.1.9)(jsdom@27.4.0)
 
+  apps/heater-system:
+    dependencies:
+      '@home-automation/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@home-automation/simulations':
+        specifier: workspace:*
+        version: link:../simulations
+
   apps/home-light-system:
     dependencies:
       '@home-automation/core':

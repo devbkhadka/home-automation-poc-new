@@ -13,9 +13,8 @@ export class MQTTServiceFactory {
    * @returns An instance of MQTTService
    * @throws Error if any required environment variable is missing
    */
-  static create(): MQTTService {
+  static create(clientId: string): MQTTService {
     const brokerUrl = process.env['MQTT_BROKER_URL'];
-    const clientId = process.env['MQTT_CLIENT_ID'];
     const username = process.env['MQTT_USERNAME'];
     const password = process.env['MQTT_PASSWORD'];
 

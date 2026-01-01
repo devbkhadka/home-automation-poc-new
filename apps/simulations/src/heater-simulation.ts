@@ -1,39 +1,41 @@
 import {
   AbstractDevice,
+  ActuatorConfig,
   DeviceConfig,
   DeviceStatus,
   DeviceType,
+  IMessageBus,
+  SensorConfig,
   TelemetryPayload,
-  MQTTService,
 } from '@home-automation/core';
 
 export type HeaterPowerState = 'off' | 'low' | 'high';
-
-export interface HeaterActuators {
-  power: HeaterPowerState;
+interface HeaterActuators extends Record<string, ActuatorConfig> {
+  power: { name: 'power'; dataType: 'string' };
 }
 
-export interface HeaterSensors {
-  temperature: number;
+interface HeaterSensors extends Record<string, SensorConfig> {
+  temperature: {
+    name: 'temperature';
+    dataType: 'number';
+    dataProductionMode: 'periodic';
+  };
 }
-
-export class SimulatedHeater extends AbstractDevice<
-  HeaterActuators,
-  HeaterSensors
-> {
-  private temperature = 20.0;
-  private power: HeaterPowerState = 'off';
+export class SimulatedHeater extends AbstractDevice<HeaterActuators, HeaterSensors> {
+  public temperature = 20.0;
+  public power: HeaterPowerState = 'off';
   private updateInterval?: NodeJS.Timeout;
   private readonly AMBIENT_TEMP = 20.0;
   private readonly MAX_TEMP_LOW = 40.0;
   private readonly MAX_TEMP_HIGH = 80.0;
 
-  constructor(config: DeviceConfig, mqttClient: MQTTService) {
-    super(config);
+  constructor(
+    config: DeviceConfig<HeaterSensors, HeaterActuators>,
+    telemetryMessageBus: IMessageBus,
+  ) {
+    super(config, telemetryMessageBus);
     // @ts-ignore - type is protected in base class but we need to set it for simulation
     this.type = DeviceType.SIMULATED;
-    this.mqttClient = mqttClient;
-
     this.onDesiredStateChange((state) => {
       console.log(
         `[Heater ${this.guid}] Received desired state change:`,
@@ -46,7 +48,9 @@ export class SimulatedHeater extends AbstractDevice<
     });
   }
 
-  async configure(config: DeviceConfig): Promise<void> {
+  async configure(
+    config: DeviceConfig<HeaterSensors, HeaterActuators>,
+  ): Promise<void> {
     console.log(`[Heater ${this.guid}] Configuring with:`, config);
   }
 
