@@ -1,15 +1,20 @@
 import { expect, test, describe, vi, beforeEach } from 'vitest';
-import { AbstractDevice } from './device.js';
-import { DeviceConfig, DeviceStatus, DeviceType } from './interfaces.js';
-import { MQTTService } from './mqtt-service.js';
+import { AbstractDevice } from './device';
+import { DeviceConfig, DeviceStatus, DeviceType } from './interfaces';
+import { MQTTService } from './mqtt-service';
+import { ActuatorConfig, SensorConfig } from './interfaces';
 
-class MockDevice extends AbstractDevice {
+class MockDevice extends AbstractDevice<{
+  power: ActuatorConfig;
+}, {
+  temperature: SensorConfig;
+}> {
   constructor(config: DeviceConfig) {
     super(config);
   }
 
   public setMqttClient(client: MQTTService) {
-    this.mqttClient = client;
+    this.messageBus = client;
   }
 
   async configure(config: DeviceConfig): Promise<void> {}

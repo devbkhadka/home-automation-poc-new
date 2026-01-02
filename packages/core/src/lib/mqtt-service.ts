@@ -1,5 +1,5 @@
 import mqtt from 'mqtt';
-import { IMessageBus } from './interfaces.js';
+import { IMessageBus } from './interfaces';
 
 export interface MQTTConfig {
   brokerUrl: string;

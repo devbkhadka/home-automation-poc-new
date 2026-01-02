@@ -4,8 +4,8 @@ import {
   DeviceStatus,
   IMessageBus,
   SensorConfig,
-} from './interfaces.js';
-import { AbstractDevice } from './device.js';
+} from './interfaces';
+import { AbstractDevice } from './device';
 
 interface HeaterActuators extends Record<string, ActuatorConfig> {
   powerSwitch: { name: 'powerSwitch'; dataType: 'boolean' };

@@ -4,8 +4,8 @@ import {
   EffectDefinition,
   ActuatorConfig,
   SensorConfig,
-} from './interfaces.js';
-import { Processor } from './processor.js';
+} from './interfaces';
+import { Processor } from './processor';
 
 /**
  * Abstract class representing an IoT System.

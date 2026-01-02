@@ -2,7 +2,7 @@ import {
   StateDefinition,
   EffectDefinition,
   EffectContext,
-} from './interfaces.js';
+} from './interfaces';
 
 export interface ProcessorConfig<TDevices, TStates> {
   devices: TDevices;

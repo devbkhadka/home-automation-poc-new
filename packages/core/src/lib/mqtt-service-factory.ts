@@ -1,4 +1,4 @@
-import { MQTTService, MQTTConfig } from './mqtt-service.js';
+import { MQTTService, MQTTConfig } from './mqtt-service';
 
 export class MQTTServiceFactory {
   /**

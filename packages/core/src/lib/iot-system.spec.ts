@@ -1,12 +1,22 @@
 import { expect, test, describe, vi, beforeEach } from 'vitest';
-import { IotSystem } from './iot-system.js';
-import { IDevice } from './interfaces.js';
-import { MQTTService } from './mqtt-service.js';
+import { IotSystem } from './iot-system';
+import { IDevice } from './interfaces';
+import { MQTTService } from './mqtt-service';
+import { IMessageBus } from './interfaces';
 
 // Mock Device
 class MockDevice {
   guid = 'dev-1';
   namespace = 'ns';
+  messageBus?: IMessageBus;
+
+  constructor(messageBus: IMessageBus) {
+    this.messageBus = messageBus;
+  }
+
+  getMessageBus(): IMessageBus {
+    return this.messageBus ?? {} as IMessageBus;
+  }
 }
 
 interface MyDevices {
@@ -21,8 +31,8 @@ interface MyStates {
 }
 
 class TestSystem extends IotSystem<MyDevices, MyStates> {
-  constructor(mqtt: MQTTService) {
-    super(mqtt);
+  constructor() {
+    super();
   }
 
   public init() {
@@ -44,11 +54,11 @@ describe('IotSystem', () => {
       publish: vi.fn(),
       subscribe: vi.fn(),
     };
-    system = new TestSystem(mqtt as any);
+    system = new TestSystem();
   });
 
   test('should add devices', () => {
-    const dev = new MockDevice() as any;
+    const dev = new MockDevice(mqtt) as any;
     system.addDevice('heater', dev);
     expect((system as any).devices.heater).toBe(dev);
   });
@@ -74,7 +84,7 @@ describe('IotSystem', () => {
   });
 
   test('should publish desired state when linked system state changes', async () => {
-    const dev = { guid: 'd1', namespace: 'ns' } as any;
+    const dev = new MockDevice(mqtt);
     system.addDevice('heater', dev);
 
     system.defineState('heaterPower', {
@@ -88,7 +98,7 @@ describe('IotSystem', () => {
     system.updateState('heaterPower', { power: true });
 
     expect(mqtt.publish).toHaveBeenCalledWith(
-      'ns/d1/desired',
+      'ns/dev-1/desired',
       JSON.stringify({ power: true }),
     );
   });

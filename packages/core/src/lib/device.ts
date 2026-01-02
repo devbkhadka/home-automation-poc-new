@@ -9,7 +9,7 @@ import {
   ActuatorConfig,
   IMessageBus,
   DataTypeFor,
-} from './interfaces.js';
+} from './interfaces';
 
 export abstract class AbstractDevice<
   TActuators extends Record<string, ActuatorConfig>,
