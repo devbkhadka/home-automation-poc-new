@@ -34,6 +34,7 @@ export type LoggingMode =
 
 export interface Acknowledgement {
   status: 'success' | 'failure' | 'warning';
+  // we can get inspiration from HTTP status codes. We should be able to handle rejection by device in critical or invalid condition
   code?: number;
 }
 

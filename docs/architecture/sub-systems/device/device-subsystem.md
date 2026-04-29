@@ -89,6 +89,15 @@ abstract class AbstractDevice implements IDevice {
 *   **Topic**: `cmd/{tenantId}/{namespace}/{guid}/{actuatorName}/desired`.
 *   **Action**: The device subscribes to this topic. Upon receiving a message, it updates its actuators to match the desired state and reports back the `reported` state.
 
+### Reconciliation & Retry Logic
+*   **Retry Behavior**: When a device does not respond or acknowledge a desired state command, the Processor retries reconciliation with exponential backoff.
+*   **Unreachable Threshold**: After a configured timeout period (e.g., multiple failed retry attempts or prolonged silence), the Processor marks the device as **Unreachable** and stops reconciliation attempts.
+*   **State Refresh on Reconnection**: When an unreachable device comes back online, the Processor:
+    1. Refreshes all device states by requesting current telemetry
+    2. Re-evaluates system states that depend on the device
+    3. Resumes reconciliation with the latest desired state
+*   **Status Tracking**: Device connection status is tracked separately from sync status (e.g., `Online`, `Unreachable`, `Synced`, `Pending`).
+
 ---
 
 ## 4. Lifecycle & Configuration

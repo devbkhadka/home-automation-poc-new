@@ -4,10 +4,25 @@ This directory contains the architectural specifications, design decisions, and 
 
 ## Table of Contents
 
+### Core
 - [Terminology & Concepts](concepts.md) - Core system terminology and concepts.
-- [User Stories & Use Cases](user-stories/device-registration.md) - Device registration use case.
-- [IoTSystem Management](user-stories/iot-system-management.md) - Orchestration, state management, and workflows.
-- [Device Subsystem](sub-systems/device-subsystem.md) - Physical, virtual, and proxy device architecture.
+
+### Sub-systems
+
+#### Device
+- [Device Subsystem](sub-systems/device/device-subsystem.md) - Physical, virtual, and proxy device architecture.
+- [Device Registration](sub-systems/device/device-registration.md) - Device onboarding and lifecycle management.
+
+#### Gateways
+- [Gateway Requirements](sub-systems/gateways/requirements.md) - Edge gateway specifications and interface.
+
+#### IoT System
+- [IoT System Management](sub-systems/iot-system/iot-system-management.md) - Orchestration and state management.
+
+### Architectural Decision Records (ADR)
+- [Device Discovery](decision-records/2026-01-10-device-discovery.md) - Strategy for local device discovery.
+- [Handle Device Critical and Offline State](decision-records/2026-01-10-handle-device-critical-and-offline-state.md) - Safety handling at gateway and device levels.
+- [Gateway as Adapter](decision-records/2026-01-11-gateway-as-adapter.md) - Pattern for hardware abstraction.
 
 ## System Overview
 - **Scale**: Thousands of consumer devices.

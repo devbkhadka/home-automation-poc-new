@@ -56,6 +56,13 @@ An `IoTSystem` is a higher-level abstraction that groups multiple devices and de
 - **Acceptance Criteria**:
     - Workflows emit a "Desired State" event for devices.
     - A reconciliation service attempts to apply the desired state to the device and reports back "Status".
+    - **Retry Logic**: If a device does not respond or acknowledge, the Processor retries with exponential backoff.
+    - **Unreachable Detection**: After a configured timeout (multiple failed retries or prolonged silence), the device is marked as **Unreachable** and reconciliation stops.
+    - **State Refresh on Reconnection**: When a device reconnects after being unreachable:
+        - Processor requests fresh telemetry from the device
+        - System states dependent on the device are re-evaluated
+        - Reconciliation resumes with the current desired state
+    - **Status Tracking**: Connection status (`Online`, `Unreachable`) is tracked separately from sync status (`Synced`, `Pending`).
 
 ### US-ISM-008: Visualization & Dashboards
 **As a** user, **I want** to define dashboards with analytics and visualizations **so that** I can monitor system performance and status at a glance.

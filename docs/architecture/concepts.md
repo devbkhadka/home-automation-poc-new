@@ -7,7 +7,7 @@ This document defines the core terminology, entities, and architectural patterns
 ## 1. Core Entities
 
 ### Device
-A physical hardware unit (sensor, actuator, or controller) that interacts with the real world. Every device has an immutable, factory-assigned **GUID**.
+A physical hardware unit (sensor, actuator, or controller) that interacts with the real world. Every device has an immutable, factory-assigned **GUID** and a transport-agnostic **Device Fingerprint** for discovery.
 
 ### IoTSystem
 A logical grouping of multiple devices and their associated logic (data transformations, states, and workflows). It represents a functional unit, such as a "Home Lighting System" or "Smart Factory Floor".
@@ -15,15 +15,18 @@ A logical grouping of multiple devices and their associated logic (data transfor
 ### Tenant
 A logical isolation boundary for users and their resources. Every `IoTSystem` and `Device` belongs to exactly one tenant after registration.
 
-### Gateway / Edge Node
-A local compute resource that acts as an intermediary between devices and the cloud. It provides low-latency execution and offline capabilities.
+### Gateway (Optional Adapter)
+An optional local compute resource that acts as a transparent, session-scoped adapter for devices incompatible with direct IP/TLS connectivity. Gateways proxy messages verbatim to the Processor and do not own device state or identity in Phase-1.
 
 ---
 
 ## 2. Identity & Security
 
 ### GUID (Global Unique Identifier)
-A unique, immutable identifier assigned to a device at the factory. It is used for initial discovery and tracking throughout the device's lifecycle.
+A unique, immutable identifier assigned to a device at the factory. It is used for tracking throughout the device's lifecycle in the Registry.
+
+### Device Fingerprint
+A stable, transport-independent identifier advertised by unregistered devices. It enables the Processor to deduplicate discovery signals across multiple gateways and transports (e.g., BLE and Wi-Fi).
 
 ### Factory Certificate
 A bootstrap certificate flashed onto the device during manufacturing. It is used to securely identify the device during the initial **Discovery** phase.
