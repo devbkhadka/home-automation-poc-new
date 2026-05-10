@@ -47,3 +47,4 @@ vitest.config.*.timestamp*
 .env
 .env.*
 *.tsbuildinfo
+pwfile

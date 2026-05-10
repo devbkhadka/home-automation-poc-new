@@ -9,6 +9,7 @@ export interface HeaterSystemStates {
   heater2_target: number;
   heater1_power: { power: HeaterPowerState };
   heater2_power: { power: HeaterPowerState };
+  too_hot: boolean;
   averageTemperature: number;
   tick: number;
 }
@@ -70,11 +71,11 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
     // Instantiate and add devices using the provided message bus
     const heater1 = new SimulatedHeater(
       createHeaterConfig('Living Room Heater', 'heater1') as any,
-      messageBus
+      messageBus,
     );
     const heater2 = new SimulatedHeater(
       createHeaterConfig('Bedroom Heater', 'heater2') as any,
-      messageBus
+      messageBus,
     );
 
     this.addDevice('heater1', heater1);
@@ -92,6 +93,12 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
     this.defineState('heater2_target', {
       type: 'modifiable',
       initialValue: 30,
+    });
+
+    this.defineState('too_hot', {
+      type: 'modifiable',
+      initialValue: false,
+      persistent: true,
     });
 
     this.defineState('tick', {
@@ -159,6 +166,19 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
       action: ({ states }) => {
         console.log(
           `[HeaterSystem] Tick ${states.tick}: Average Temperature: ${states.averageTemperature.toFixed(2)}°C`,
+        );
+
+        this.updateState('too_hot', states.averageTemperature > 27);
+      },
+    });
+
+    this.registerEffect({
+      name: 'logTooHot',
+      dependencies: ['too_hot', 'averageTemperature'],
+      action: ({ states }) => {
+        if (!states.too_hot) return;
+        console.log(
+          `[HeaterSystem] ######### Too hot: ${states.too_hot} with avg temp ${states.averageTemperature.toFixed(2)}°C ##########`,
         );
       },
     });
