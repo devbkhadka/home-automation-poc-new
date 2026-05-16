@@ -8,6 +8,13 @@ export interface ProcessorConfig<TDevices, TStates> {
   devices: TDevices;
 }
 
+/**
+ * Core engine for managing the state of an IoT system.
+ * It handles state registrations, computed states, and effects based on state changes.
+ * 
+ * @template TDevices Type definition for the devices available in the system.
+ * @template TStates Type definition for the states managed by the processor.
+ */
 export class Processor<TDevices, TStates> {
   private states = new Map<keyof TStates, any>();
   private definitions = new Map<
@@ -17,10 +24,21 @@ export class Processor<TDevices, TStates> {
   private effects: EffectDefinition<TDevices, TStates, any, any>[] = [];
   private devices: TDevices;
 
+  /**
+   * Creates a new instance of the Processor.
+   * @param config Configuration object containing initial device instances.
+   */
   constructor(config: ProcessorConfig<TDevices, TStates>) {
     this.devices = config.devices;
   }
 
+  /**
+   * Registers a new state definition.
+   * States can be 'modifiable' (external input) or 'computed' (derived from other states/devices).
+   * 
+   * @param name The unique identifier for the state.
+   * @param definition The configuration for the state, including its type, initial value or compute function.
+   */
   registerState<
     K extends keyof TStates,
     TDeps extends readonly (keyof TStates)[],
@@ -35,6 +53,12 @@ export class Processor<TDevices, TStates> {
     }
   }
 
+  /**
+   * Registers an effect that runs when specific dependencies change.
+   * Effects are used for side-effects like sending commands to devices or external systems.
+   * 
+   * @param effect The effect definition including dependencies and the action to perform.
+   */
   registerEffect<
     TDeps extends readonly (keyof TStates)[],
     TDevDeps extends readonly (keyof TDevices)[],
@@ -42,6 +66,12 @@ export class Processor<TDevices, TStates> {
     this.effects.push(effect as any);
   }
 
+  /**
+   * Updates a modifiable state and triggers the recomputation of dependent states and effects.
+   * 
+   * @param name The name of the state to update.
+   * @param value The new value for the state.
+   */
   updateState<K extends keyof TStates>(name: K, value: TStates[K]) {
     const oldValue = this.states.get(name);
     // Simple comparison for primitives, deep comparison for objects could be added if needed
@@ -51,6 +81,10 @@ export class Processor<TDevices, TStates> {
     }
   }
 
+  /**
+   * Initializes the processor by performing an initial recompute of all registered states.
+   * This ensures all computed states are populated based on their initial dependencies.
+   */
   public initialize() {
     // Initial recompute to populate all computed states
     this.processChanges(Array.from(this.definitions.keys()));
@@ -100,7 +134,10 @@ export class Processor<TDevices, TStates> {
   }
 
   /**
-   * Publishes the desired state for a specific device.
+   * Publishes the desired state for a specific device via the message bus.
+   * 
+   * @param deviceKey The key identifying the device in the system.
+   * @param state The state object to publish to the device's 'desired' topic.
    */
   public async publishDesiredState<K extends keyof TDevices>(
     deviceKey: K,
@@ -124,6 +161,10 @@ export class Processor<TDevices, TStates> {
     return true;
   }
 
+  /**
+   * Returns a snapshot of all current states managed by the processor.
+   * @returns An object containing all state keys and their current values.
+   */
   public getStates(): TStates {
     const proxy = {} as any;
     for (const [key, value] of this.states.entries()) {
