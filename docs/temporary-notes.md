@@ -7,6 +7,10 @@
 
 
 ## TODO
+- currently heater-system is reading device data from device instance. In real world device data will only be available through message bus. Modify iot-system to subscribe to device data from message bus and update states.
+
+
+## Backlog
 - I don't like device dependencies in states and effect. That provides clean interface for access device data and commands inside the state and effect function. However, it will mean un-necessary re-computation when anything on device changes.
 - Instead it may be more efficient to create a modifiable state for any value we want to use and use it as dependency. This will give more control on when to update and recompute.
 - We can't assume device running in same process as system so interface should always be through message bus.

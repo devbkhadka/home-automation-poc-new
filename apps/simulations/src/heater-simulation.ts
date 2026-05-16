@@ -10,11 +10,11 @@ import {
 } from '@home-automation/core';
 
 export type HeaterPowerState = 'off' | 'low' | 'high';
-interface HeaterActuators extends Record<string, ActuatorConfig> {
+export interface HeaterActuators extends Record<string, ActuatorConfig> {
   power: { name: 'power'; dataType: 'string' };
 }
 
-interface HeaterSensors extends Record<string, SensorConfig> {
+export interface HeaterSensors extends Record<string, SensorConfig> {
   temperature: {
     name: 'temperature';
     dataType: 'number';

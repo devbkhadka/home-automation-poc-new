@@ -1,7 +1,14 @@
-import { IotSystem, IMessageBus } from '@home-automation/core';
 import {
-  SimulatedHeater,
+  IotSystem,
+  IMessageBus,
+  ProxyDevice,
+  IProxyDevice,
+  SensorData,
+} from '@home-automation/core';
+import {
   HeaterPowerState,
+  HeaterActuators,
+  HeaterSensors,
 } from '@home-automation/simulations';
 
 export interface HeaterSystemStates {
@@ -15,8 +22,8 @@ export interface HeaterSystemStates {
 }
 
 export type HeaterSystemDevices = {
-  heater1: SimulatedHeater;
-  heater2: SimulatedHeater;
+  heater1: ProxyDevice<HeaterActuators, HeaterSensors> & SensorData<HeaterSensors>;
+  heater2: ProxyDevice<HeaterActuators, HeaterSensors> & SensorData<HeaterSensors>;
 };
 
 const createMemoryBus = (): IMessageBus => {
@@ -39,7 +46,7 @@ const createMemoryBus = (): IMessageBus => {
 
 const dummyMessageBus = createMemoryBus();
 
-const createHeaterConfig = (name: string, guid: string) => ({
+export const createHeaterConfig = (name: string, guid: string) => ({
   guid,
   name,
   namespace: 'system',
@@ -68,21 +75,18 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
   constructor(messageBus: IMessageBus = dummyMessageBus) {
     super();
 
-    // Instantiate and add devices using the provided message bus
-    const heater1 = new SimulatedHeater(
+    // Instantiate and add devices using ProxyDevice
+    const heater1 = new ProxyDevice<HeaterActuators, HeaterSensors>(
       createHeaterConfig('Living Room Heater', 'heater1') as any,
       messageBus,
     );
-    const heater2 = new SimulatedHeater(
+    const heater2 = new ProxyDevice<HeaterActuators, HeaterSensors>(
       createHeaterConfig('Bedroom Heater', 'heater2') as any,
       messageBus,
     );
 
-    this.addDevice('heater1', heater1);
-    this.addDevice('heater2', heater2);
-
-    heater1.start();
-    heater2.start();
+    this.addDevice('heater1', heater1 as any);
+    this.addDevice('heater2', heater2 as any);
 
     // Define States
     this.defineState('heater1_target', {
@@ -192,7 +196,5 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
 
   public stop() {
     clearInterval(this.intervalId);
-    this.devices.heater1.stop();
-    this.devices.heater2.stop();
   }
 }

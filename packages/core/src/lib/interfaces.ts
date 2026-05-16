@@ -178,6 +178,11 @@ export type ActuatorStateForDevice<T> =
 export type SensorDataForDevice<T> =
   T extends IDevice<any, infer TSensors> ? SensorData<TSensors> : never;
 
+export type IProxyDevice<TConfig extends DeviceConfig<any, any>> =
+  TConfig extends DeviceConfig<infer TSensors, infer TActuators>
+    ? IDevice<TActuators, TSensors> & SensorData<TSensors>
+    : never;
+
 export interface EffectContext<
   TDevices,
   TStates,

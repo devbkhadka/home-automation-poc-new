@@ -48,3 +48,4 @@ vitest.config.*.timestamp*
 .env.*
 *.tsbuildinfo
 pwfile
+.pnpm-store
