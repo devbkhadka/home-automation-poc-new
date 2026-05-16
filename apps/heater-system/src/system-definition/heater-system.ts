@@ -18,7 +18,6 @@ export interface HeaterSystemStates {
   heater2_power: { power: HeaterPowerState };
   too_hot: boolean;
   averageTemperature: number;
-  tick: number;
 }
 
 export type HeaterSystemDevices = {
@@ -69,8 +68,6 @@ export const createHeaterConfig = (name: string, guid: string) => ({
 });
 
 export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemStates> {
-  private tickCount = 0;
-  private intervalId: NodeJS.Timeout;
 
   constructor(messageBus: IMessageBus = dummyMessageBus) {
     super();
@@ -105,21 +102,15 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
       persistent: true,
     });
 
-    this.defineState('tick', {
-      type: 'modifiable',
-      initialValue: 0,
-    });
-
     // Device Power States (Computed & Linked to Devices)
     this.defineState('heater1_power', {
       type: 'computed',
-      dependencies: ['tick', 'heater1_target'],
-      deviceDependencies: ['heater1'],
+      dependencies: ['heater1_target'],
+      deviceDependencies: ['heater1.temperature' as any],
       deviceKey: 'heater1',
       compute: ({ devices, states }) => {
-        const heater = devices.heater1;
         const target = states.heater1_target;
-        const current = heater.temperature || 20;
+        const current = devices.heater1.temperature || 20;
 
         let desiredPower: HeaterPowerState = 'off';
         if (current < target - 1) {
@@ -134,7 +125,7 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
 
     this.defineState('heater2_power', {
       type: 'computed',
-      dependencies: ['tick', 'heater2_target'],
+      dependencies: ['heater2_target'],
       deviceDependencies: ['heater2'],
       deviceKey: 'heater2',
       compute: ({ devices, states }) => {
@@ -155,21 +146,27 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
 
     this.defineState('averageTemperature', {
       type: 'computed',
-      dependencies: ['tick'],
-      deviceDependencies: ['heater1', 'heater2'],
+      dependencies: [],
+      deviceDependencies: [
+        'heater1.temperature' as any,
+        'heater2.temperature' as any,
+      ],
       compute: ({ devices }) => {
         const t1 = devices.heater1.temperature;
         const t2 = devices.heater2.temperature;
+
+        if (!t1 || !t2) return 0;
+
         return (t1 + t2) / 2;
       },
     });
 
     this.registerEffect({
       name: 'logAverageTemp',
-      dependencies: ['tick', 'averageTemperature'],
+      dependencies: ['averageTemperature'],
       action: ({ states }) => {
         console.log(
-          `[HeaterSystem] Tick ${states.tick}: Average Temperature: ${states.averageTemperature.toFixed(2)}°C`,
+          `[HeaterSystem] Average Temperature: ${states.averageTemperature.toFixed(2)}°C`,
         );
 
         this.updateState('too_hot', states.averageTemperature > 27);
@@ -187,14 +184,9 @@ export class HeaterSystem extends IotSystem<HeaterSystemDevices, HeaterSystemSta
       },
     });
 
-    // Periodically update tick to drive the system
-    this.intervalId = setInterval(() => {
-      this.tickCount++;
-      this.updateState('tick', this.tickCount);
-    }, 5000);
   }
 
   public stop() {
-    clearInterval(this.intervalId);
+    // No-op for now as tick interval is removed
   }
 }

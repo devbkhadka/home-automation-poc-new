@@ -138,18 +138,48 @@ export type StateValue =
   | Record<string, any>
   | any[];
 
+export type ProcessorComputedStateDefinition<
+  TStates,
+  TValue,
+  TDeps extends readonly (keyof TStates)[],
+> = {
+  type: 'computed';
+  dependencies: TDeps;
+  compute: (context: {
+    states: Pick<TStates, TDeps[number]>;
+  }) => TValue;
+};
+
+export type ProcessorModifiableStateDefinition<TStates, TValue> = {
+  type: 'modifiable';
+  initialValue: TValue;
+  persistent?: boolean;
+};
+
+export type ProcessorStateDefinition<
+  TStates,
+  TValue,
+  TDeps extends readonly (keyof TStates)[] = any,
+> =
+  | ProcessorComputedStateDefinition<TStates, TValue, TDeps>
+  | ProcessorModifiableStateDefinition<TStates, TValue>;
+
+export type DeviceDependency<TDevices> =
+  | keyof TDevices
+  | { [K in keyof TDevices]: `${Extract<K, string>}.${string}` }[keyof TDevices];
+
 export type ComputedStateDefinition<
   TDevices,
   TStates,
   TValue,
   TDeps extends readonly (keyof TStates)[],
-  TDevDeps extends readonly (keyof TDevices)[],
+  TDevDeps extends readonly DeviceDependency<TDevices>[],
 > = {
   type: 'computed';
   dependencies: TDeps;
   deviceDependencies?: TDevDeps;
   compute: (context: {
-    devices: Pick<TDevices, TDevDeps[number]>;
+    devices: any; // Will be a proxy or specific Pick based on TDevDeps
     states: Pick<TStates, TDeps[number]>;
   }) => TValue;
   deviceKey?: keyof TDevices;
@@ -167,7 +197,7 @@ export type StateDefinition<
   TStates,
   TValue,
   TDeps extends readonly (keyof TStates)[] = any,
-  TDevDeps extends readonly (keyof TDevices)[] = any,
+  TDevDeps extends readonly DeviceDependency<TDevices>[] = any,
 > =
   | ComputedStateDefinition<TDevices, TStates, TValue, TDeps, TDevDeps>
   | ModifiableStateDefinition<TDevices, TStates, TValue>;
@@ -183,13 +213,32 @@ export type IProxyDevice<TConfig extends DeviceConfig<any, any>> =
     ? IDevice<TActuators, TSensors> & SensorData<TSensors>
     : never;
 
+export interface ProcessorEffectContext<
+  TStates,
+  TDeps extends readonly (keyof TStates)[],
+> {
+  states: Pick<TStates, TDeps[number]>;
+  updateState<K extends keyof TStates>(stateKey: K, value: TStates[K]): void;
+}
+
+export type ProcessorEffectDefinition<
+  TStates,
+  TDeps extends readonly (keyof TStates)[],
+> = {
+  name: string;
+  dependencies: TDeps;
+  action: (
+    context: ProcessorEffectContext<TStates, TDeps>,
+  ) => void | Promise<void>;
+};
+
 export interface EffectContext<
   TDevices,
   TStates,
   TDeps extends readonly (keyof TStates)[],
-  TDevDeps extends readonly (keyof TDevices)[],
+  TDevDeps extends readonly DeviceDependency<TDevices>[],
 > {
-  devices: Pick<TDevices, TDevDeps[number]>;
+  devices: any;
   states: Pick<TStates, TDeps[number]>;
   updateState<K extends keyof TStates>(stateKey: K, value: TStates[K]): void;
 }
@@ -198,7 +247,7 @@ export type EffectDefinition<
   TDevices,
   TStates,
   TDeps extends readonly (keyof TStates)[],
-  TDevDeps extends readonly (keyof TDevices)[],
+  TDevDeps extends readonly DeviceDependency<TDevices>[],
 > = {
   name: string;
   dependencies: TDeps;

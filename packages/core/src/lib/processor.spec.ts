@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Processor } from './processor';
-import { StateDefinition, EffectDefinition } from './interfaces';
 
 describe('Processor', () => {
   interface MockStates {
@@ -10,35 +9,10 @@ describe('Processor', () => {
     alarm: boolean;
   }
 
-  interface MockDevices {
-    heater: {
-      namespace: string;
-      guid: string;
-      getMessageBus: () => any;
-    };
-  }
-
-  let processor: Processor<MockDevices, MockStates>;
-  let mockMessageBus: any;
-  let mockHeater: any;
+  let processor: Processor<MockStates>;
 
   beforeEach(() => {
-    mockMessageBus = {
-      publish: vi.fn().mockResolvedValue(undefined),
-      subscribe: vi.fn(),
-    };
-
-    mockHeater = {
-      namespace: 'home',
-      guid: 'heater-1',
-      getMessageBus: () => mockMessageBus,
-    };
-
-    processor = new Processor<MockDevices, MockStates>({
-      devices: {
-        heater: mockHeater,
-      },
-    });
+    processor = new Processor<MockStates>();
   });
 
   describe('registerState', () => {
@@ -199,41 +173,6 @@ describe('Processor', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(capturedStates).toEqual({ temperature: 25 });
-    });
-  });
-
-  describe('publishDesiredState', () => {
-    it('should publish message to correct topic', async () => {
-      await processor.publishDesiredState('heater', { power: true });
-
-      expect(mockMessageBus.publish).toHaveBeenCalledWith(
-        'home/heater-1/desired',
-        JSON.stringify({ power: true })
-      );
-    });
-
-    it('should automatically publish when a state with deviceKey changes', async () => {
-      processor.registerState('temperature', {
-        type: 'modifiable',
-        initialValue: 20,
-      });
-
-      processor.registerState('heaterState' as any, {
-        type: 'computed',
-        dependencies: ['temperature'],
-        deviceKey: 'heater',
-        compute: ({ states }) => ({ power: states.temperature > 25 }),
-      });
-
-      processor.initialize();
-      mockMessageBus.publish.mockClear();
-
-      processor.updateState('temperature', 30);
-
-      expect(mockMessageBus.publish).toHaveBeenCalledWith(
-        'home/heater-1/desired',
-        JSON.stringify({ power: true })
-      );
     });
   });
 });

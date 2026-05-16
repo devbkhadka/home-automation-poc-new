@@ -1,51 +1,36 @@
 import {
-  StateDefinition,
-  EffectDefinition,
-  EffectContext,
+  ProcessorStateDefinition,
+  ProcessorEffectDefinition,
+  ProcessorEffectContext,
 } from './interfaces';
-
-export interface ProcessorConfig<TDevices, TStates> {
-  devices: TDevices;
-}
 
 /**
  * Core engine for managing the state of an IoT system.
  * It handles state registrations, computed states, and effects based on state changes.
- * 
- * @template TDevices Type definition for the devices available in the system.
+ *
  * @template TStates Type definition for the states managed by the processor.
  */
-export class Processor<TDevices, TStates> {
+export class Processor<TStates> {
   private states = new Map<keyof TStates, any>();
   private definitions = new Map<
     keyof TStates,
-    StateDefinition<TDevices, TStates, any>
+    ProcessorStateDefinition<TStates, any, any>
   >();
-  private effects: EffectDefinition<TDevices, TStates, any, any>[] = [];
-  private devices: TDevices;
-
-  /**
-   * Creates a new instance of the Processor.
-   * @param config Configuration object containing initial device instances.
-   */
-  constructor(config: ProcessorConfig<TDevices, TStates>) {
-    this.devices = config.devices;
-  }
+  private effects: ProcessorEffectDefinition<TStates, any>[] = [];
 
   /**
    * Registers a new state definition.
-   * States can be 'modifiable' (external input) or 'computed' (derived from other states/devices).
-   * 
+   * States can be 'modifiable' (external input) or 'computed' (derived from other states).
+   *
    * @param name The unique identifier for the state.
    * @param definition The configuration for the state, including its type, initial value or compute function.
    */
   registerState<
     K extends keyof TStates,
     TDeps extends readonly (keyof TStates)[],
-    TDevDeps extends readonly (keyof TDevices)[],
   >(
     name: K,
-    definition: StateDefinition<TDevices, TStates, TStates[K], TDeps, TDevDeps>,
+    definition: ProcessorStateDefinition<TStates, TStates[K], TDeps>,
   ) {
     this.definitions.set(name, definition);
     if (definition.type === 'modifiable') {
@@ -55,26 +40,23 @@ export class Processor<TDevices, TStates> {
 
   /**
    * Registers an effect that runs when specific dependencies change.
-   * Effects are used for side-effects like sending commands to devices or external systems.
-   * 
+   *
    * @param effect The effect definition including dependencies and the action to perform.
    */
-  registerEffect<
-    TDeps extends readonly (keyof TStates)[],
-    TDevDeps extends readonly (keyof TDevices)[],
-  >(effect: EffectDefinition<TDevices, TStates, TDeps, TDevDeps>) {
+  registerEffect<TDeps extends readonly (keyof TStates)[]>(
+    effect: ProcessorEffectDefinition<TStates, TDeps>,
+  ) {
     this.effects.push(effect as any);
   }
 
   /**
    * Updates a modifiable state and triggers the recomputation of dependent states and effects.
-   * 
+   *
    * @param name The name of the state to update.
    * @param value The new value for the state.
    */
   updateState<K extends keyof TStates>(name: K, value: TStates[K]) {
     const oldValue = this.states.get(name);
-    // Simple comparison for primitives, deep comparison for objects could be added if needed
     if (this.hasChanged(oldValue, value)) {
       this.states.set(name, value);
       this.processChanges([name]);
@@ -86,13 +68,11 @@ export class Processor<TDevices, TStates> {
    * This ensures all computed states are populated based on their initial dependencies.
    */
   public initialize() {
-    // Initial recompute to populate all computed states
     this.processChanges(Array.from(this.definitions.keys()));
   }
 
   private processChanges(changedStates: (keyof TStates)[]) {
     const sorted = this.topologicalSort(Array.from(this.definitions.keys()));
-
     const currentChanges = new Set<keyof TStates>(changedStates);
 
     for (const stateName of sorted) {
@@ -104,12 +84,8 @@ export class Processor<TDevices, TStates> {
 
         if (hasChangedDependency || !this.states.has(stateName)) {
           const restrictedStates = this.getRestrictedStates(def.dependencies);
-          const restrictedDevices = this.getRestrictedDevices(
-            def.deviceDependencies || [],
-          );
 
           const newValue = def.compute({
-            devices: restrictedDevices,
             states: restrictedStates,
           });
           const oldValue = this.states.get(stateName);
@@ -122,35 +98,7 @@ export class Processor<TDevices, TStates> {
       }
     }
 
-    // After all recomputations, check if any changed state is linked to a device
-    for (const stateName of currentChanges) {
-      const def = this.definitions.get(stateName);
-      if (def?.deviceKey) {
-        this.publishDesiredState(def.deviceKey, this.states.get(stateName));
-      }
-    }
-
     this.triggerEffects(Array.from(currentChanges));
-  }
-
-  /**
-   * Publishes the desired state for a specific device via the message bus.
-   * 
-   * @param deviceKey The key identifying the device in the system.
-   * @param state The state object to publish to the device's 'desired' topic.
-   */
-  public async publishDesiredState<K extends keyof TDevices>(
-    deviceKey: K,
-    state: any,
-  ) {
-    const device = (this.devices as any)[deviceKey];
-    if (!device) {
-      console.warn(`Device ${String(deviceKey)} not found in system`);
-      return;
-    }
-
-    const topic = `${device.namespace}/${device.guid}/desired`;
-    await device.getMessageBus().publish(topic, JSON.stringify(state));
   }
 
   private hasChanged(oldValue: any, newValue: any): boolean {
@@ -173,25 +121,28 @@ export class Processor<TDevices, TStates> {
     return proxy as TStates;
   }
 
+  /**
+   * Returns the current value of a specific state.
+   * @param name The name of the state.
+   * @returns The current value or undefined if not set.
+   */
+  public getState<K extends keyof TStates>(name: K): TStates[K] | undefined {
+    return this.states.get(name);
+  }
+
   private triggerEffects(allChangedStates: (keyof TStates)[]) {
     const changedSet = new Set(allChangedStates);
 
     for (const effect of this.effects) {
       if (effect.dependencies.some((t: keyof TStates) => changedSet.has(t))) {
         const restrictedStates = this.getRestrictedStates(effect.dependencies);
-        const restrictedDevices = this.getRestrictedDevices(
-          effect.deviceDependencies || [],
-        );
 
-        const context: EffectContext<TDevices, TStates, any, any> = {
-          devices: restrictedDevices,
+        const context: ProcessorEffectContext<TStates, any> = {
           states: restrictedStates,
           updateState: (name: keyof TStates, value: any) =>
             this.updateState(name, value),
         };
 
-        // Effects can be async, but we don't necessarily wait for them here
-        // to avoid blocking the state update loop.
         Promise.resolve(effect.action(context)).catch((err) => {
           console.error(`Error in effect ${effect.name}:`, err);
         });
@@ -233,14 +184,6 @@ export class Processor<TDevices, TStates> {
     const subset: any = {};
     for (const dep of dependencies) {
       subset[dep] = this.states.get(dep);
-    }
-    return subset;
-  }
-
-  private getRestrictedDevices(dependencies: readonly (keyof TDevices)[]): any {
-    const subset: any = {};
-    for (const dep of dependencies) {
-      subset[dep] = (this.devices as any)[dep];
     }
     return subset;
   }
